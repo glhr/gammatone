@@ -20,10 +20,6 @@ from .filters import erb_point
 import gammatone.gtgram
 import gammatone.fftweight
 
-from matplotlib.ticker import EngFormatter
-
-
-
 class ERBFormatter(matplotlib.ticker.EngFormatter):
     """
     Axis formatter for gammatone filterbank analysis. This formatter calculates
@@ -46,17 +42,16 @@ class ERBFormatter(matplotlib.ticker.EngFormatter):
         :param high_freq: the high end of the gammatone filterbank frequency
           range
         """
-        print(args)
         self.low_freq = low_freq
         self.high_freq = high_freq
-        super().__init__(*args, **kwargs)
+        super(ERBFormatter, self).__init__(*args, **kwargs)
 
     def _erb_axis_scale(self, fraction):
         return erb_point(self.low_freq, self.high_freq, fraction)
 
     def __call__(self, val, pos=None):
         newval = self._erb_axis_scale(val)
-        return super().__call__(newval, pos)
+        return super(ERBFormatter, self).__call__(newval, pos)
 
 
 def gtgram_plot(
@@ -81,8 +76,7 @@ def gtgram_plot(
     See :func:`gammatone.gtgram.gtgram` for details of the paramters.
     """
     # Set a nice formatter for the y-axis
-    # formatter = ERBFormatter(f_min, fs/2, unit='Hz', places=0)
-    formatter = EngFormatter(unit='Hz', places=0)
+    formatter = ERBFormatter(f_min, fs/2, unit='Hz', places=0)
 
     axes.yaxis.set_major_formatter(formatter)
 
@@ -96,7 +90,7 @@ def gtgram_plot(
     gtg = gtgram_function(x, fs, window_time, hop_time, channels, f_min)
     Z = np.flipud(20 * np.log10(gtg))
 
-    img = axes.imshow(Z, extent=[0, duration, f_min, fs/2], aspect="auto")
+    img = axes.imshow(Z, extent=[0, duration, 1, 0], aspect=aspect_ratio)
 
 
 # Entry point for CLI script
