@@ -20,6 +20,8 @@ from .filters import erb_point
 import gammatone.gtgram
 import gammatone.fftweight
 
+import png
+
 class ERBFormatter(matplotlib.ticker.EngFormatter):
     """
     Axis formatter for gammatone filterbank analysis. This formatter calculates
@@ -58,7 +60,9 @@ def gtgram_plot(
         gtgram_function,
         axes, x, fs,
         window_time, hop_time, channels, f_min,
-        imshow_args=None
+        imshow_args=None,
+        filename="test.png",
+        show=False
         ):
     """
     Plots a spectrogram-like time frequency magnitude array based on gammatone
@@ -75,10 +79,11 @@ def gtgram_plot(
 
     See :func:`gammatone.gtgram.gtgram` for details of the paramters.
     """
-    # Set a nice formatter for the y-axis
-    formatter = ERBFormatter(f_min, fs/2, unit='Hz', places=0)
+    if show:
+        # Set a nice formatter for the y-axis
+        formatter = ERBFormatter(f_min, fs/2, unit='Hz', places=0)
 
-    axes.yaxis.set_major_formatter(formatter)
+        axes.yaxis.set_major_formatter(formatter)
 
     # Figure out time axis scaling
     print(x)
@@ -90,7 +95,14 @@ def gtgram_plot(
     gtg = gtgram_function(x, fs, window_time, hop_time, channels, f_min)
     Z = np.flipud(20 * np.log10(gtg))
 
-    img = axes.imshow(Z, extent=[0, duration, 1, 0], aspect=aspect_ratio)
+    print(Z.shape)
+
+    arr = Z+np.abs(np.min(Z))
+    arr = (arr * 255 / np.max(arr)).astype('uint8')
+    png.from_array(arr, mode="L").save(filename)
+
+    if show:
+        img = axes.imshow(Z, extent=[0, duration, 1, 0], aspect=aspect_ratio)
 
 
 # Entry point for CLI script
@@ -103,7 +115,7 @@ performing analysis.
 """
 
 
-def render_audio_from_file(path, duration, function):
+def render_audio_from_file(path, duration, function, out_file="test.png", show=False):
     """
     Renders the given ``duration`` of audio from the audio file at ``path``
     using the gammatone spectrogram function ``function``.
@@ -117,30 +129,37 @@ def render_audio_from_file(path, duration, function):
 
     if len(data.shape)>1:
         signal = data.mean(1)
-    signal = data
+    else:
+        signal = data
 
     # Default gammatone-based spectrogram parameters
-    twin = 0.08
+    twin = 0.02
     thop = twin / 2
-    channels = 1024
-    fmin = 20
+    channels = 128
+    fmin = 0
 
     # Set up the plot
-    fig = matplotlib.pyplot.figure()
-    axes = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+    if show:
+        fig = matplotlib.pyplot.figure()
+        axes = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+    else:
+        axes = None
 
     gtgram_plot(
         function,
         axes,
         signal,
         samplerate,
-        twin, thop, channels, fmin)
+        twin, thop, channels, fmin,
+        filename = out_file,
+        show=show)
 
-    axes.set_title(os.path.basename(path))
-    axes.set_xlabel("Time (s)")
-    axes.set_ylabel("Frequency")
+    if show:
+        axes.set_title(os.path.basename(path))
+        axes.set_xlabel("Time (s)")
+        axes.set_ylabel("Frequency")
 
-    matplotlib.pyplot.show()
+        matplotlib.pyplot.show()
 
 
 def main():
@@ -169,4 +188,11 @@ def main():
 
     args = parser.parse_args()
 
-    return render_audio_from_file(args.sound_file, args.duration, args.function)
+    render_audio_from_file(args.sound_file, args.duration, args.function, show=False)
+
+    import glob
+    for wav_file in glob.glob("/home/robotlab/speaker_ws/src/speaker_classification_ros/src/speaker_classification/data/respeaker/spectrograms/**/*.wav"):
+        print(wav_file)
+        out_file = wav_file.replace("spectrograms","gammatones").replace(".wav",".png")
+        print(out_file)
+        render_audio_from_file(wav_file, args.duration, args.function, show=False, out_file=out_file)

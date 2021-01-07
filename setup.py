@@ -15,6 +15,7 @@ setup(
         'nose',
         'mock',
         'matplotlib',
+        'pypng'
     ],
 
     entry_points = {
