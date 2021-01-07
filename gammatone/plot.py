@@ -191,8 +191,8 @@ def main():
     render_audio_from_file(args.sound_file, args.duration, args.function, show=False)
 
     import glob
-    for wav_file in glob.glob("/home/robotlab/speaker_ws/src/speaker_classification_ros/src/speaker_classification/data/respeaker/spectrograms/**/*.wav"):
+    for wav_file in glob.glob("/home/robotlab/speaker_ws/src/speaker_classification_ros/src/speaker_classification/data/respeaker/wav/**/*.wav"):
         print(wav_file)
-        out_file = wav_file.replace("spectrograms","gammatones").replace(".wav",".png")
+        out_file = wav_file.replace("/wav","/gammatones").replace(".wav",".png")
         print(out_file)
         render_audio_from_file(wav_file, args.duration, args.function, show=False, out_file=out_file)
