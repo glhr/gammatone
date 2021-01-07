@@ -1,0 +1,8 @@
+
+venv/
+
+*.wav
+
+*.pyc
+
+*.egg-info
