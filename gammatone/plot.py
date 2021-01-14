@@ -99,7 +99,10 @@ def gtgram_plot(
 
     arr = Z+np.abs(np.min(Z))
     arr = (arr * 255 / np.max(arr)).astype('uint8')
-    png.from_array(arr, mode="L").save(filename)
+    try:
+        png.from_array(arr, mode="L").save(filename)
+    except Exception as e:
+        print("Skipping - {}".format(e))
 
     if show:
         img = axes.imshow(Z, extent=[0, duration, 1, 0], aspect=aspect_ratio)
@@ -193,6 +196,6 @@ def main():
     import glob
     for wav_file in glob.glob("/home/robotlab/speaker_ws/src/speaker_classification_ros/src/speaker_classification/data/respeaker/wav/**/*.wav"):
         print(wav_file)
-        out_file = wav_file.replace("/wav","/gammatones").replace(".wav",".png")
+        out_file = wav_file.replace("/wav","/gammatones/_sorted").replace(".wav",".png")
         print(out_file)
         render_audio_from_file(wav_file, args.duration, args.function, show=False, out_file=out_file)
